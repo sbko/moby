@@ -23,7 +23,7 @@ type logT interface {
 // and removing everything else. It's meant to run after any tests so that they don't
 // depend on each others.
 func (e *Execution) Clean(t testingT, dockerBinary string) {
-	client, err := client.NewEnvClient()
+	cli, err := client.NewEnvClient()
 	if err != nil {
 		t.Fatalf("%v", err)
 	}
@@ -32,10 +32,10 @@ func (e *Execution) Clean(t testingT, dockerBinary string) {
 	}
 	deleteAllContainers(t, dockerBinary)
 	deleteAllImages(t, dockerBinary, e.protectedElements.images)
-	deleteAllVolumes(t, client)
-	deleteAllNetworks(t, client, e.DaemonPlatform())
+	deleteAllVolumes(t, cli)
+	deleteAllNetworks(t, cli, e.DaemonPlatform())
 	if e.DaemonPlatform() == "linux" {
-		deleteAllPlugins(t, client, dockerBinary)
+		deleteAllPlugins(t, cli, dockerBinary)
 	}
 }
 

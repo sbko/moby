@@ -269,9 +269,9 @@ func daemonTime(c *check.C) time.Time {
 	if testEnv.LocalDaemon() {
 		return time.Now()
 	}
-	client, err := client.NewEnvClient()
+	cli, err := client.NewEnvClient()
 	c.Assert(err, check.IsNil)
-	info, err := client.Info(context.Background())
+	info, err := cli.Info(context.Background())
 	c.Assert(err, check.IsNil)
 
 	dt, err := time.Parse(time.RFC3339Nano, info.SystemTime)
@@ -372,13 +372,9 @@ func waitInspectWithArgs(name, expr, expected string, timeout time.Duration, arg
 
 func getInspectBody(c *check.C, version, id string) []byte {
 	var httpClient *http.Client
-	host := os.Getenv("DOCKER_HOST")
-	if host == "" {
-		host = client.DefaultDockerHost
-	}
-	client, err := client.NewClient(host, version, httpClient, nil)
+	cli, err := client.NewClient(daemonHost(), version, httpClient, nil)
 	c.Assert(err, check.IsNil)
-	_, body, err := client.ContainerInspectWithRaw(context.Background(), id, false)
+	_, body, err := cli.ContainerInspectWithRaw(context.Background(), id, false)
 	c.Assert(err, check.IsNil)
 	return body
 }
@@ -406,11 +402,11 @@ func minimalBaseImage() string {
 }
 
 func getGoroutineNumber() (int, error) {
-	client, err := client.NewEnvClient()
+	cli, err := client.NewEnvClient()
 	if err != nil {
 		return 0, err
 	}
-	info, err := client.Info(context.Background())
+	info, err := cli.Info(context.Background())
 	if err != nil {
 		return 0, err
 	}

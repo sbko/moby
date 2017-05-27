@@ -2,7 +2,6 @@ package main
 
 import (
 	"net/http"
-	"os"
 
 	"fmt"
 
@@ -13,9 +12,9 @@ import (
 )
 
 func (s *DockerSuite) TestInfoAPI(c *check.C) {
-	client, err := client.NewEnvClient()
+	cli, err := client.NewEnvClient()
 	c.Assert(err, checker.IsNil)
-	info, err := client.Info(context.Background())
+	info, err := cli.Info(context.Background())
 	c.Assert(err, checker.IsNil)
 
 	// always shown fields
@@ -45,15 +44,11 @@ func (s *DockerSuite) TestInfoAPI(c *check.C) {
 
 func (s *DockerSuite) TestInfoAPIVersioned(c *check.C) {
 	var httpClient *http.Client
-	host := os.Getenv("DOCKER_HOST")
-	if host == "" {
-		host = client.DefaultDockerHost
-	}
-	client, err := client.NewClient(host, "v1.20", httpClient, nil)
+	cli, err := client.NewClient(daemonHost(), "v1.20", httpClient, nil)
 	c.Assert(err, checker.IsNil)
 	testRequires(c, DaemonIsLinux) // Windows only supports 1.25 or later
 
-	info, err := client.Info(context.Background())
+	info, err := cli.Info(context.Background())
 	c.Assert(err, checker.IsNil)
 
 	out := fmt.Sprintf("%+v", info)

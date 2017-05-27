@@ -107,10 +107,10 @@ func (s *DockerSuite) TestInspectAPIContainerVolumeDriver(c *check.C) {
 
 func (s *DockerSuite) TestInspectAPIImageResponse(c *check.C) {
 	dockerCmd(c, "tag", "busybox:latest", "busybox:mytag")
-	client, err := client.NewEnvClient()
+	cli, err := client.NewEnvClient()
 	c.Assert(err, checker.IsNil)
 
-	imageJSON, _, err := client.ImageInspectWithRaw(context.Background(), "busybox")
+	imageJSON, _, err := cli.ImageInspectWithRaw(context.Background(), "busybox")
 	c.Assert(err, checker.IsNil)
 
 	c.Assert(imageJSON.RepoTags, checker.HasLen, 2)

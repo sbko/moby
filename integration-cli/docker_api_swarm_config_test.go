@@ -3,12 +3,13 @@
 package main
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/docker/docker/api/types/swarm"
+	"github.com/docker/docker/client"
 	"github.com/docker/docker/integration-cli/checker"
 	"github.com/go-check/check"
+	"golang.org/x/net/context"
 )
 
 func (s *DockerSwarmSuite) TestAPISwarmConfigsEmptyList(c *check.C) {
@@ -52,9 +53,15 @@ func (s *DockerSwarmSuite) TestAPISwarmConfigsDelete(c *check.C) {
 	c.Assert(config.ID, checker.Equals, id, check.Commentf("config: %v", config))
 
 	d.DeleteConfig(c, config.ID)
-	status, out, err := d.SockRequest("GET", "/configs/"+id, nil)
+
+	var httpClient *http.Client
+	cli, err := client.NewClient(d.Sock(), "", httpClient, nil)
 	c.Assert(err, checker.IsNil)
-	c.Assert(status, checker.Equals, http.StatusNotFound, check.Commentf("config delete: %s", string(out)))
+
+	expected := "no such config"
+
+	_, _, err = cli.ConfigInspectWithRaw(context.Background(), id)
+	c.Assert(err.Error(), checker.Contains, expected)
 }
 
 func (s *DockerSwarmSuite) TestAPISwarmConfigsUpdate(c *check.C) {
@@ -110,9 +117,12 @@ func (s *DockerSwarmSuite) TestAPISwarmConfigsUpdate(c *check.C) {
 	config = d.GetConfig(c, id)
 	config.Spec.Data = []byte("TESTINGDATA2")
 
-	url := fmt.Sprintf("/configs/%s/update?version=%d", config.ID, config.Version.Index)
-	status, out, err := d.SockRequest("POST", url, config.Spec)
+	var httpClient *http.Client
+	cli, err := client.NewClient(d.Sock(), "", httpClient, nil)
 
-	c.Assert(err, checker.IsNil, check.Commentf(string(out)))
-	c.Assert(status, checker.Equals, http.StatusInternalServerError, check.Commentf("output: %q", string(out)))
+	expected := "only updates to Labels are allowed"
+
+	err = cli.ConfigUpdate(context.Background(), config.ID, config.Version, config.Spec)
+	c.Assert(err.Error(), checker.Contains, expected)
+
 }

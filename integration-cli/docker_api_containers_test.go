@@ -950,9 +950,9 @@ func (s *DockerSuite) TestContainerAPICopyNotExistsAnyMore(c *check.C) {
 		Resource: "/test.txt",
 	}
 	// no copy in client/
-	status, _, err := request.SockRequest("POST", "/containers/"+name+"/copy", postData, daemonHost())
+	res, _, err := request.Post("/containers/"+name+"/copy", request.JSONBody(postData))
 	c.Assert(err, checker.IsNil)
-	c.Assert(status, checker.Equals, http.StatusNotFound)
+	c.Assert(res.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
 func (s *DockerSuite) TestContainerAPICopyPre124(c *check.C) {
@@ -964,12 +964,12 @@ func (s *DockerSuite) TestContainerAPICopyPre124(c *check.C) {
 		Resource: "/test.txt",
 	}
 
-	status, body, err := request.SockRequest("POST", "/v1.23/containers/"+name+"/copy", postData, daemonHost())
+	res, body, err := request.Post("/v1.23/containers/"+name+"/copy", request.JSONBody(postData))
 	c.Assert(err, checker.IsNil)
-	c.Assert(status, checker.Equals, http.StatusOK)
+	c.Assert(res.StatusCode, checker.Equals, http.StatusOK)
 
 	found := false
-	for tarReader := tar.NewReader(bytes.NewReader(body)); ; {
+	for tarReader := tar.NewReader(body); ; {
 		h, err := tarReader.Next()
 		if err != nil {
 			if err == io.EOF {
@@ -994,10 +994,12 @@ func (s *DockerSuite) TestContainerAPICopyResourcePathEmptyPr124(c *check.C) {
 		Resource: "",
 	}
 
-	status, body, err := request.SockRequest("POST", "/v1.23/containers/"+name+"/copy", postData, daemonHost())
+	res, body, err := request.Post("/v1.23/containers/"+name+"/copy", request.JSONBody(postData))
 	c.Assert(err, checker.IsNil)
-	c.Assert(status, checker.Equals, http.StatusInternalServerError)
-	c.Assert(string(body), checker.Matches, "Path cannot be empty\n")
+	c.Assert(res.StatusCode, checker.Equals, http.StatusInternalServerError)
+	b, err := testutil.ReadBody(body)
+	c.Assert(err, checker.IsNil)
+	c.Assert(string(b), checker.Matches, "Path cannot be empty\n")
 }
 
 func (s *DockerSuite) TestContainerAPICopyResourcePathNotFoundPre124(c *check.C) {
@@ -1009,10 +1011,12 @@ func (s *DockerSuite) TestContainerAPICopyResourcePathNotFoundPre124(c *check.C)
 		Resource: "/notexist",
 	}
 
-	status, body, err := request.SockRequest("POST", "/v1.23/containers/"+name+"/copy", postData, daemonHost())
+	res, body, err := request.Post("/v1.23/containers/"+name+"/copy", request.JSONBody(postData))
 	c.Assert(err, checker.IsNil)
-	c.Assert(status, checker.Equals, http.StatusInternalServerError)
-	c.Assert(string(body), checker.Matches, "Could not find the file /notexist in container "+name+"\n")
+	c.Assert(res.StatusCode, checker.Equals, http.StatusInternalServerError)
+	b, err := testutil.ReadBody(body)
+	c.Assert(err, checker.IsNil)
+	c.Assert(string(b), checker.Matches, "Could not find the file /notexist in container "+name+"\n")
 }
 
 func (s *DockerSuite) TestContainerAPICopyContainerNotFoundPr124(c *check.C) {
@@ -1021,9 +1025,9 @@ func (s *DockerSuite) TestContainerAPICopyContainerNotFoundPr124(c *check.C) {
 		Resource: "/something",
 	}
 
-	status, _, err := request.SockRequest("POST", "/v1.23/containers/notexists/copy", postData, daemonHost())
+	res, _, err := request.Post("/v1.23/containers/notexists/copy", request.JSONBody(postData))
 	c.Assert(err, checker.IsNil)
-	c.Assert(status, checker.Equals, http.StatusNotFound)
+	c.Assert(res.StatusCode, checker.Equals, http.StatusNotFound)
 }
 
 func (s *DockerSuite) TestContainerAPIDelete(c *check.C) {
@@ -1189,7 +1193,7 @@ func (s *DockerSuite) TestPostContainerAPICreateWithStringOrSliceEntrypoint(c *c
 		Entrypoint string
 		Cmd        []string
 	}{"busybox", "echo", []string{"hello", "world"}}
-	_, _, err = request.SockRequest("POST", "/containers/create?name=echotest2", config2, daemonHost())
+	_, _, err = request.Post("/containers/create?name=echotest2", request.JSONBody(config2))
 	c.Assert(err, checker.IsNil)
 	out, _ = dockerCmd(c, "start", "-a", "echotest2")
 	c.Assert(strings.TrimSpace(out), checker.Equals, "hello world")
@@ -1214,7 +1218,7 @@ func (s *DockerSuite) TestPostContainersCreateWithStringOrSliceCmd(c *check.C) {
 		Entrypoint string
 		Cmd        string
 	}{"busybox", "echo", "hello world"}
-	_, _, err = request.SockRequest("POST", "/containers/create?name=echotest2", config2, daemonHost())
+	_, _, err = request.Post("/containers/create?name=echotest2", request.JSONBody(config2))
 	c.Assert(err, checker.IsNil)
 	out, _ = dockerCmd(c, "start", "-a", "echotest2")
 	c.Assert(strings.TrimSpace(out), checker.Equals, "hello world")
@@ -1229,9 +1233,9 @@ func (s *DockerSuite) TestPostContainersCreateWithStringOrSliceCapAddDrop(c *che
 		CapAdd  string
 		CapDrop string
 	}{"busybox", "NET_ADMIN", "SYS_ADMIN"}
-	status, _, err := request.SockRequest("POST", "/containers/create?name=capaddtest0", config, daemonHost())
+	res, _, err := request.Post("/containers/create?name=capaddtest0", request.JSONBody(config))
 	c.Assert(err, checker.IsNil)
-	c.Assert(status, checker.Equals, http.StatusCreated)
+	c.Assert(res.StatusCode, checker.Equals, http.StatusCreated)
 
 	config2 := containertypes.Config{
 		Image: "busybox",

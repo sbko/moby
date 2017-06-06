@@ -52,6 +52,5 @@ func (s *DockerSuite) TestInfoAPIVersioned(c *check.C) {
 	c.Assert(err, checker.IsNil)
 
 	out := fmt.Sprintf("%+v", info)
-	c.Assert(out, checker.Contains, "ExecutionDriver")
 	c.Assert(out, checker.Contains, "not supported")
 }

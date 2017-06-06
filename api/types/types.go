@@ -185,7 +185,6 @@ type Info struct {
 	RuncCommit         Commit
 	InitCommit         Commit
 	SecurityOptions    []string
-	ExecutionDriver    string
 }
 
 // KeyValue holds a key/value pair

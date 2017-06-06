@@ -205,7 +205,7 @@ func (s *DockerSwarmSuite) TestAPISwarmServicesUpdateStartFirst(c *check.C) {
 	// service image at start
 	image1 := "busybox:latest"
 	// target image in update
-	image2 := "testhealth"
+	image2 := "testhealth:latest"
 
 	// service started from this image won't pass health check
 	_, _, err := d.BuildImageWithOut(image2,

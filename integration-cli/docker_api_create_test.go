@@ -7,6 +7,7 @@ import (
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/client"
 	"github.com/docker/docker/integration-cli/checker"
 	"github.com/docker/docker/integration-cli/request"
 	"github.com/docker/docker/pkg/testutil"
@@ -15,14 +16,15 @@ import (
 )
 
 func (s *DockerSuite) TestAPICreateWithNotExistImage(c *check.C) {
-	cli := newEnvClient(c)
+	cli, err := client.NewEnvClient()
+	c.Assert(err, checker.IsNil)
 	name := "test"
 	config := container.Config{
 		Image:   "test456:v1",
 		Volumes: map[string]struct{}{"/tmp": {}},
 	}
 
-	_, err := cli.ContainerCreate(context.Background(), &config, &container.HostConfig{}, &network.NetworkingConfig{}, name)
+	_, err = cli.ContainerCreate(context.Background(), &config, &container.HostConfig{}, &network.NetworkingConfig{}, name)
 	expected := "No such image: test456:v1"
 	c.Assert(err.Error(), checker.Contains, expected)
 
@@ -47,7 +49,8 @@ func (s *DockerSuite) TestAPICreateWithNotExistImage(c *check.C) {
 
 // Test for #25099
 func (s *DockerSuite) TestAPICreateEmptyEnv(c *check.C) {
-	cli := newEnvClient(c)
+	cli, err := client.NewEnvClient()
+	c.Assert(err, checker.IsNil)
 	name := "test1"
 
 	config := container.Config{
@@ -56,7 +59,7 @@ func (s *DockerSuite) TestAPICreateEmptyEnv(c *check.C) {
 		Cmd:   []string{"true"},
 	}
 
-	_, err := cli.ContainerCreate(context.Background(), &config, &container.HostConfig{}, &network.NetworkingConfig{}, name)
+	_, err = cli.ContainerCreate(context.Background(), &config, &container.HostConfig{}, &network.NetworkingConfig{}, name)
 	expected := "invalid environment variable:"
 	c.Assert(err.Error(), checker.Contains, expected)
 
